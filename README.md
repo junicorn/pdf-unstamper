@@ -1,7 +1,7 @@
 # pdf-unstamper
-Remove text stamps of **any font**, **any encoding** and **any language** with pdf-unstamper now!
+![](https://img.shields.io/badge/Powered%20by-Apache%20PDFBox-blue.svg?style=flat-square)
 
-Powered by [Apache PDFBox®](https://pdfbox.apache.org/).
+Remove text stamps of **any font**, **any encoding** and **any language** with pdf-unstamper now!
 
 ## Effect
 <table>
@@ -25,33 +25,52 @@ Powered by [Apache PDFBox®](https://pdfbox.apache.org/).
 
 ## Usage
 ```
-Usage: 
+Usage:
    [OPTION] -i [INPUT PDF] -k [KEYWORDS...] (-o [OUTPUT PDF])
    [OPTION] -I [INPUT DIR] -k [KEYWORDS...] (-O [OUTPUT DIR])
 
 Options:
-   -d,  --directly          directly modify the input file(s), which makes option o/O unnecessary
+   -d,  --directly          directly modify the input file(s), option o/O is
+                            unnecessary when this option is on
    -r,  --recursive         process files in the given dir recursively
+   -s,  --strict            use strict mode, a text area is considered as water mark
+                            only if its content strictly equals one of the keywords
 ```
 
 ## Get it now
 ### As a command
-We strongly recommend this for your convenience.
+Install (or update to) the latest version as command `unstamp` in `~/bin/` and soft-linked as `/usr/local/bin/unstamp` for convenience.
 #### Install
-Before running the *install* script, **make sure you have `wget` installed**, otherwise you need to manually download [*pdf-unstamper.jar*](https://github.com/hwding/pdf-unstamper/releases) and **place it alongside the script**.  
-If you have a broken *pdf-unstamper.jar* downloaded (even installed) by the script, remove it and run the script again.
-```
-➜ git clone https://github.com/hwding/pdf-unstamper.git
-➜ cd pdf-unstamper/script/
-➜ ./install
+Make sure you have `wget` installed.
+```shell
+➜ sudo bash -c "$(curl -s https://raw.githubusercontent.com/hwding/pdf-unstamper/master/script/install)"
+
+# If using a proxy
+➜ sudo proxychains bash -c "$(curl -s https://raw.githubusercontent.com/hwding/pdf-unstamper/master/script/install)"
+
+# Script options
+#
+# -d [DIR]  install binary into a specified directory
+# -w        install without creating a soft-link to /usr/local/bin/
+
+# If install with options, download the script first
+➜ wget https://raw.githubusercontent.com/hwding/pdf-unstamper/master/script/install
+
+# Then execute with or without proxy
+➜ sudo bash install -d ~/my-bins/
+➜ sudo bash install -w
+➜ sudo bash install -d ~/my-bins/ -w
+➜ sudo proxychains bash install -d ~/my-bins/
+➜ sudo proxychains bash install -w
+➜ sudo proxychains bash install -d ~/my-bins/ -w
 ```
 #### Run
-```
+```shell
 # For single file processing
-➜ unstamp -i "C Recipes.pdf" -o "C Recipes.unstamped.pdf" -k www.allitebooks.com
+➜ unstamp -i "C Recipes.pdf" -o "C Recipes.unstamped.pdf" -k www.allitebooks.com -s
 ➜ unstamp -i RoR.pdf -o RoR.unstamped.pdf -k 图灵社区会员
 # Or
-➜ unstamp -i "C Recipes.pdf" -d -k www.allitebooks.com
+➜ unstamp -i "C Recipes.pdf" -d -k www.allitebooks.com -s
 ➜ unstamp -i RoR.pdf -d -k 图灵社区会员
  
 # For massive files processing
@@ -64,12 +83,12 @@ If you have a broken *pdf-unstamper.jar* downloaded (even installed) by the scri
 #### Download
 Get [*pdf-unstamper.jar*](https://github.com/hwding/pdf-unstamper/releases).
 #### Run
-```
+```shell
 # For single file processing
-➜ java -jar pdf-unstamper.jar -i "C Recipes.pdf" -o "C Recipes.unstamped.pdf" -k www.allitebooks.com
+➜ java -jar pdf-unstamper.jar -i "C Recipes.pdf" -o "C Recipes.unstamped.pdf" -k www.allitebooks.com -s
 ➜ java -jar pdf-unstamper.jar -i RoR.pdf -o RoR.unstamped.pdf -k 图灵社区会员
 # Or
-➜ java -jar pdf-unstamper.jar -i "C Recipes.pdf" -d -k www.allitebooks.com
+➜ java -jar pdf-unstamper.jar -i "C Recipes.pdf" -d -k www.allitebooks.com -s
 ➜ java -jar pdf-unstamper.jar -i RoR.pdf -d -k 图灵社区会员
  
 # For massive files processing

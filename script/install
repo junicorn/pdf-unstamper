@@ -1,17 +1,45 @@
 #!/bin/bash
 
 #AUTH hwding
-#DATE AUG/25/2017
+#DATE OCT/15/2017
 #DESC install unstamp as a command
 
 user_bin=`echo ~`"/bin/"
+locl_bin="/usr/local/bin/"
 jar_name="pdf-unstamper.jar"
 exe_name="unstamp"
-_version="0.1.1"
+_version="0.1.3"
 jar_durl="https://github.com/hwding/pdf-unstamper/releases/download/$_version/$jar_name"
+wrapper="#!/bin/bash\njava -jar ${user_bin}${jar_name} \"\$@\"\n"
+
+# default option(s)
+create_link=1
+
+# parse option(s)
+while getopts ":d:w" opt; do
+    case "${opt}" in
+        w)
+            create_link=0
+            ;;
+        d)
+            given_dir="${OPTARG}"
+            # complete the slash at the end of the given directory
+            [[ "${given_dir: -1}" == "/" ]] && user_bin=$given_dir || user_bin="${given_dir}/"
+            ;;
+    esac
+done
+shift $((OPTIND-1))
 
 function chk_f() {
     if [ ! -f "$1" ]; then
+        return 0;
+    else
+        return 1;
+    fi
+}
+
+function chk_l() {
+    if [ ! -L "$1" ]; then
         return 0;
     else
         return 1;
@@ -26,63 +54,92 @@ function chk_d() {
     fi
 }
 
+echo -e "\n╭──────────────────────────────────────────────╮"
+echo -e "│          Installer for pdf-unstamper         │"
+echo -e "│    $(tput setaf 6)https://github.com/hwding/pdf-unstamper$(tput sgr 0)   │"
+echo -e "╰──────────────────────────────────────────────╯\n"
+
 # check JRE installation
 if type -p java > /dev/null 2>&1; then
     _java=1
-    echo "> JRE detected in PATH"
+    echo -e "$(tput setaf 2)> JRE detected in PATH$(tput sgr 0)"
 elif [[ -n "$JAVA_HOME" ]] && [[ -x "$JAVA_HOME/bin/java" ]]; then
     _java=1
-    echo "> JRE detected in JAVA_HOME"
+    echo -e "$(tput setaf 2)> JRE detected in JAVA_HOME$(tput sgr 0)"
 else
     _java=0
-    read -p "You do not have JRE installed, continue? [ENTER]"
+    echo -e -n "$(tput setaf 1)> no JRE installed, continue? [ENTER]$(tput sgr 0)"
+    read
 fi
 
 # check JRE version
 if [ $_java -gt 0 ]; then
     version=$(java -version 2>&1 | awk -F '"' '/version/ {print $2}')
     if [[ "$version" > "1.8" ]]; then
-        echo "> JRE version is at least 1.8"
+        echo -e "$(tput setaf 2)> JRE version is at least 1.8$(tput sgr 0)"
     else         
-        read -p "> JRE version less than 1.8, continue? [ENTER]"
+        echo -e -n "$(tput setaf 1)> JRE version less than 1.8, continue? [ENTER]$(tput sgr 0)"
+        read
     fi
 fi
 
 # check ~/bin/
 chk_d $user_bin
 if [ $? -eq 0 ]; then
-    echo "> target dir $user_bin not detected, creating..."
+    echo -e -n "$(tput setaf 1)> target dir $user_bin not detected, create? [ENTER]$(tput sgr 0)"
+    read
     `mkdir $user_bin`
 else
-    echo "> target dir $user_bin detected"
+    echo -e "$(tput setaf 2)> target dir $user_bin detected$(tput sgr 0)"
 fi
 
 # fetch JAR
 chk_f "$jar_name"
+if [ $? -eq 1 ]; then
+    `rm $jar_name`
+fi
+echo -n "> downloading $jar_name version $_version from GitHub..."
+`wget $jar_durl > /dev/null 2>&1`
+echo "done"
+
+# generate wrapper
+chk_f $exe_name
 if [ $? -eq 0 ]; then
-    echo -n "> missing $jar_name, downloading version $_version from GitHub..."
-    `wget $jar_durl > /dev/null 2>&1`
-    echo "OK"
+    echo "> generating wrapper..."
+    echo -e $wrapper > $exe_name
 fi
 
 # uninstall old version
 chk_f "${user_bin}${jar_name}"
 if [ $? -eq 1 ]; then
     echo "> removing old version of $jar_name"
-    echo -n "> "
-    `rm -i ${user_bin}${jar_name}`
+    `rm ${user_bin}${jar_name}`
 fi
 chk_f "${user_bin}${exe_name}"
 if [ $? -eq 1 ]; then
     echo "> removing old version of $exe_name"
-    echo -n "> "
-    `rm -i ${user_bin}${exe_name}`
+    `rm ${user_bin}${exe_name}`
 fi
 
 # install
 echo "> installing ${exe_name}..."
-`cp $jar_name $user_bin`
-`cp $exe_name $user_bin`
+`mv $jar_name $user_bin`
+`mv $exe_name $user_bin`
 
-echo "> ${exe_name} installed as ${user_bin}${exe_name}"
+# grant permission
+echo "> granting executable permission to wrapper..."
+`chmod +x ${user_bin}${exe_name}`
+
+# create soft link
+if [ $create_link -gt 0 ]; then
+    echo "> linking ${user_bin}${exe_name} to ${locl_bin}${exe_name}"
+    chk_l "${locl_bin}${exe_name}"
+    if [ $? -eq 1 ]; then
+        `rm ${locl_bin}${exe_name}`
+    fi
+    `ln -s ${user_bin}${exe_name} ${locl_bin}${exe_name}`
+fi
+
+echo -e "$(tput setaf 2)> ${exe_name} installed as ${user_bin}${exe_name}$(tput sgr 0)"
 echo "> hava a nice day"
+echo
